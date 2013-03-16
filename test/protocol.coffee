@@ -62,3 +62,65 @@ suite "protocol:", ->
 
    			test 'rest', ->
    				assert.deepEqual (List.rest [1, 2, 3]), [2, 3]
+
+      suite 'string:', ->
+        setup ->
+          protocol.extend List, "",
+            ['first', (str) -> str.substr(0,1)]
+            ['rest', (str) -> str.substr(1)]
+
+        test 'first', ->
+          assert.strictEqual (List.first 'hello'), 'h'
+
+        test 'rest', ->
+          assert.strictEqual (List.rest 'hello'), 'ello'
+
+
+      suite 'object:', ->
+        obj = null
+        class MyObject
+          constructor: (@first, @rest) ->
+
+        setup ->
+          protocol.extend List, MyObject,
+            ['first', (obj) -> obj.first]
+            ['rest', (obj) -> obj.rest]
+
+          obj = new MyObject 'the first', 'the next'
+
+        test 'first', ->
+          assert.strictEqual (List.first obj), 'the first'
+
+        test 'rest', ->
+          assert.strictEqual (List.rest obj), 'the next'
+
+        suite 'inheritance:', ->
+          obj2 = null
+          class OtherClass extends MyObject
+      
+          setup ->
+            obj2 = new OtherClass 'the first', 'the next'
+
+          test 'first', ->
+            assert.strictEqual (List.first obj2), 'the first'
+
+          test 'rest', ->
+            assert.strictEqual (List.rest obj2), 'the next'
+
+        suite 'overloading:', ->
+          obj2 = null
+          class AnotherClass extends MyObject
+      
+          setup ->
+            protocol.extend List, AnotherClass,
+              ['first', (obj) -> "it's " + obj.first]
+              ['rest', (obj) -> "it's " + obj.rest]
+            obj2 = new AnotherClass 'the first', 'the next'
+
+          test 'first', ->
+            assert.strictEqual (List.first obj), 'the first'
+            assert.strictEqual (List.first obj2), "it's the first"
+
+          test 'rest', ->
+            assert.strictEqual (List.rest obj), 'the next'
+            assert.strictEqual (List.rest obj2), "it's the next"

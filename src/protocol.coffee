@@ -10,9 +10,9 @@ do (
 
     createDispatcher = (name, doc, opts) ->
       fn = (any, args...) ->
-        return fn new (protoType any), args... unless any instanceof Object
-        dispatchMap = getDispatchMap(fn, any)
-        method = dispatchMap?[0]
+        type = any
+        type = new (protoType any) unless any instanceof Object
+        method = getDispatchMap(fn, type)
         if method
           method any, args...
         else
@@ -49,19 +49,14 @@ do (
       types[typeName] ?= ->
       types[typeName]
 
-    getDispatchMap = (dispatcher, any) ->
-      protoId = identity.get dispatcher
-      any?.$__cosy_protocols?[protoId]
+    getId = (dispatcher) ->
+      '$__cosy_protocols_' + (identity.get dispatcher)
 
-    getProtoMap = (dispatcher, type) ->
-      protoId = identity.get dispatcher
-      type.prototype.$__cosy_protocols ?= {}
-      type.prototype.$__cosy_protocols[protoId] ?= {}
-      type.prototype.$__cosy_protocols[protoId]
+    getDispatchMap = (dispatcher, any) ->
+      any?[getId dispatcher]
 
     extendMethod = (proto, type, name, fn) ->
-      protoMap = getProtoMap proto[name], type
-      protoMap[0] = fn
+      type.prototype[getId proto[name]] = fn
 
     protoExtend = (proto, type, methods...) ->
       return protoExtend proto, (protoType type), methods... unless type instanceof Object

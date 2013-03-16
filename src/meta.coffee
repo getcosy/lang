@@ -16,7 +16,6 @@ do (
             value: {_ns: {}}
         else
           obj.__cosy_meta = {_ns: {}}
-        
 
       obj.__cosy_meta
 

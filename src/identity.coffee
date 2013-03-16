@@ -35,5 +35,6 @@ do (
     define factory
   else
     root.cosy ?= {}
-    root.cosy.identity = do factory
+    root.cosy.lang ?= {}
+    root.cosy.lang.identity = do factory
   return

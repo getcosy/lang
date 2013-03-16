@@ -104,5 +104,7 @@ do (
   else if define?.amd
     define ['./meta', './identity'], factory
   else
-    root.cosy.protocol = factory root.cosy.lang.meta, root.cosy.lang.identity
+    root.cosy ?= {}
+    root.cosy.lang ?= {}
+    root.cosy.lang.protocol = factory root.cosy.lang.meta, root.cosy.lang.identity
   return

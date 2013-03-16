@@ -27,5 +27,6 @@ do (
     define factory
   else
     root.cosy ?= {}
-    root.cosy.tail = do factory
+    root.cosy.lang ?= {}
+    root.cosy.lang.tail = do factory
   return

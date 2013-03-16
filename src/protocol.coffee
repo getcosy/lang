@@ -50,7 +50,7 @@ do (
       types[typeName]
 
     getId = (dispatcher) ->
-      '$__cosy_protocols_' + (identity.get dispatcher)
+      '$__cosy_protocols' + (identity.get dispatcher)
 
     getDispatchMap = (dispatcher, any) ->
       any?[getId dispatcher]
@@ -60,7 +60,17 @@ do (
 
     protoExtend = (proto, type, methods...) ->
       return protoExtend proto, (protoType type), methods... unless type instanceof Object
+      type.prototype[getId proto] = true
       extendMethod proto, type, method... for method in methods
+
+    protoExtends = (proto, type) ->
+      return protoExtends proto, (protoType type) unless type instanceof Object
+      type.prototype[getId proto]?
+
+    protoImplements = (proto, any) ->
+      type = any
+      type = new (protoType any) unless any instanceof Object
+      type[getId proto]?
 
     methodDoc = (method) ->
       md = meta(method)
@@ -81,6 +91,8 @@ do (
 
     protocol.define = protoDefine
     protocol.extend = protoExtend
+    protocol.extends = protoExtends
+    protocol.implements = protoImplements
     protocol.doc = protoDoc
 
     protocol

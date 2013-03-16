@@ -6,15 +6,25 @@ do (
     identity = {}
     nextId = 0
 
-    id = (obj) ->
+    _id = (obj) ->
       unless obj.__cosy_id?
-        obj.__cosy_id = '$__cosy_id' + nextId
+        id = '$__cosy_id#' + nextId
         nextId += 1
+
+        if 'function' is typeof Object.defineProperty
+          Object.defineProperty obj, '__cosy_id',
+            enumerable: false,
+            configurable: false,
+            writable: false,
+            value: id
+        else
+          obj.__cosy_id = id
+        
 
       obj.__cosy_id
 
     identity.get = (any) ->
-      return id(any) if 'object' == typeof any
+      return _id(any) if any instanceof Object
       null
 
     identity

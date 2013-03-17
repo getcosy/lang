@@ -134,7 +134,7 @@ suite "sequence", ->
         taken = (drop 3, [1, 2, 3, 4, 5, 6])
         assert.deepEqual (vec taken), [4, 5, 6]
 
-    suite 'partition', ->
+    suite 'partition:', ->
         partition = vec = null
         setup ->
             {partition, vec} = sequence
@@ -148,3 +148,24 @@ suite "sequence", ->
             windows = (partition 4, 3, [1, 2, 3, 4, 5, 6])
             assert.deepEqual (vec first windows), [1, 2, 3, 4]
             assert.deepEqual (vec first rest windows), [4, 5, 6]
+
+    suite 'concat:', ->
+        concat = drop = null
+
+        setup ->
+            {concat, drop} = sequence
+
+        test 'no args', ->
+            assert.isNull first do concat
+
+        test '1 arg', ->
+            assert.strictEqual (first concat [1]), 1
+
+        test '2 args', ->
+            assert.strictEqual (first drop 3, concat [1, 2, 3], [4]), 4
+
+        test '3 args', ->
+            assert.strictEqual (first drop 5, concat [1, 2, 3], [4, 5], [6]), 6
+
+        test '4 args', ->
+            assert.strictEqual (first drop 7, concat [1, 2, 3], [4, 5], [6, 7], [8]), 8

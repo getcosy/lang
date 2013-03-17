@@ -122,6 +122,22 @@ do (
           return null if empty [coll]
           cons (take n, coll), (partition n, step, (drop step, coll))
     }
+
+    concat = fn$ {
+      0: () ->
+        lazy -> null
+      1: (x) ->
+        lazy -> x
+      2: (x, y) ->
+        lazy ->
+          if empty [x]
+            y
+          else
+            cons (first x), (concat (rest x), y)
+      $: (x, y, z...) ->
+        concat (concat x, y), z...
+    }
+
     sequence = {
       ISeq
       first
@@ -135,6 +151,7 @@ do (
       take
       drop
       partition
+      concat
     }
 ) ->
   if "object" is typeof exports

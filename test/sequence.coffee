@@ -129,10 +129,21 @@ suite "sequence", ->
         taken = (take 3, [1, 2, 3, 4, 5, 6])
         assert.deepEqual (vec taken), [1, 2, 3]
 
+    test 'takeWhile', ->
+        {takeWhile, vec} = sequence
+        taken = (takeWhile ((x) -> x<4), [1, 2, 3, 4, 5, 6])
+        assert.deepEqual (vec taken), [1, 2, 3]
+
     test 'drop', ->
         {drop, vec} = sequence
-        taken = (drop 3, [1, 2, 3, 4, 5, 6])
+        droped = (drop 3, [1, 2, 3, 4, 5, 6])
+        assert.deepEqual (vec droped), [4, 5, 6]
+
+    test 'dropWhile', ->
+        {dropWhile, vec} = sequence
+        taken = (dropWhile ((x) -> x<4), [1, 2, 3, 4, 5, 6])
         assert.deepEqual (vec taken), [4, 5, 6]
+
 
     suite 'partition:', ->
         partition = vec = null

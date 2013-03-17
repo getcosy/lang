@@ -108,11 +108,23 @@ do (
         return null if empty [coll]
         cons (first coll), (take n-1, rest coll)
 
+    takeWhile = (pred, coll) ->
+      lazy ->
+        return null if empty [coll]
+        return null unless pred first coll
+        cons (first coll), (takeWhile pred, rest coll)
+
     drop = (n, coll) ->
       lazy ->
         return coll unless n
         return null if empty [coll]
         drop n-1, rest coll
+
+    dropWhile = (pred, coll) ->
+      lazy ->
+        return null if empty [coll]
+        return coll unless pred first coll
+        dropWhile pred, rest coll
 
     partition = fn$ {
       2: (n, coll) ->
@@ -149,7 +161,9 @@ do (
       reduce
       filter
       take
+      takeWhile
       drop
+      dropWhile
       partition
       concat
     }

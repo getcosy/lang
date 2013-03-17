@@ -5,23 +5,17 @@
 
 suite "sequence", ->
     sequence = null
+    first = rest = cons = lazy = null
     setup ->
         sequence = require '../src/sequence'
+        {first, rest, cons, lazy} = sequence
 
     suite 'ISeq:', ->
-        first = rest = conj = null
-
-        setup ->
-            {first, rest, conj} = sequence.ISeq
-
         test 'has first', ->
             assert.isFunction first
 
         test 'has rest', ->
             assert.isFunction rest
-
-        test 'has conj', ->
-            assert.isFunction conj
 
         suite 'null:', ->
             test 'first(null)', ->
@@ -29,9 +23,6 @@ suite "sequence", ->
 
             test 'rest(null)', ->
                 assert.isNull rest null
-
-            test 'conj(null, item)', ->
-                assert.deepEqual (conj null, 1), [1]
 
         suite 'Array:', ->
             arr = null
@@ -45,5 +36,29 @@ suite "sequence", ->
             test 'rest(Array)', ->
                 assert.deepEqual (rest arr), [2, 3, 4]
 
-            test 'conj(Array, seq)', ->
-                assert.deepEqual (conj arr, 5), [1, 2, 3, 4, 5]
+    suite 'cons', ->
+        test 'car', ->
+            assert.strictEqual (first (cons 1, [2])), 1
+
+        test 'cadr', ->
+            assert.strictEqual (first (rest (cons 1, [2]))), 2
+
+    suite 'lazy', ->
+        called = numbers = null
+
+        setup ->
+            called = false
+            numbers = (start) ->
+                lazy ->
+                    called = true
+                    cons start, numbers start + 1
+
+        test 'lazy does not invoke body', ->
+            assert.isObject (numbers 0)
+            assert.isFalse called
+
+        test 'car', ->
+            assert.strictEqual (first (numbers 0)), 0
+
+        test 'cadr', ->
+            assert.strictEqual (first (rest (numbers 0))), 1

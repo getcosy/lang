@@ -3,8 +3,6 @@
 do (
   root = this,
   factory = (protocol) ->
-    promise = {}
-
     IPromise = protocol.define 'IPromise',
       ['when', 'Regester a callback with a deffered']
       ['deliver', 'Resolve a deffered']
@@ -26,8 +24,9 @@ do (
       ['when', (deffered, fn) -> fn deffered],
       ['deliver', (deffered, val) ->]
 
-    promise.IPromise = IPromise
-    promise
+    promise = {
+      IPromise
+    }
 ) ->
   if "object" is typeof exports
     protocol = require './protocol'

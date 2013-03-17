@@ -165,3 +165,16 @@ suite "protocol:", ->
 
           test 'implements list', ->
             assert.isTrue protocol.implements List, obj2
+
+      # suite 'protocol:', ->
+      #   List2 = null
+
+      #   setup ->
+      #     List2 = protocol.define 'List2',
+      #       ['next']
+
+      #     protocol.extend List2, List,
+      #       ['next', (list) -> List.next list]
+
+      #   test 'next', ->
+      #       assert.deepEqual (List2.next [1, 2, 3]), [2, 3]

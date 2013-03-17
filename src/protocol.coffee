@@ -20,6 +20,7 @@ do (
       md = meta(fn)
       md.name = name
       md.doc = doc
+      md.extendable = true
       fn
 
     defineMethod = (proto, name, opts...) ->
@@ -56,6 +57,8 @@ do (
       any?[getId dispatcher]
 
     extendMethod = (proto, type, name, fn) ->
+      md = meta proto[name]
+      throw new Error name + ' not extendable' unless md.extendable
       type.prototype[getId proto[name]] = fn
 
     protoExtend = (proto, type, methods...) ->
@@ -89,13 +92,13 @@ do (
       doc.methods.push methodDoc proto[method] for own method of proto
       doc
 
-    protocol.define = protoDefine
-    protocol.extend = protoExtend
-    protocol.extends = protoExtends
-    protocol.implements = protoImplements
-    protocol.doc = protoDoc
-
-    protocol
+    protocol = {
+      define: protoDefine
+      extend: protoExtend
+      extends: protoExtends
+      implements: protoImplements
+      doc: protoDoc
+    }
 ) ->
   if "object" is typeof exports
     meta = require './meta'

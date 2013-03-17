@@ -45,7 +45,7 @@ do (
     types = {}
 
     protoType = (any) ->
-      typeName = typeof any
+      typeName = if any is null then 'null' else typeof any
       types[typeName] ?= ->
       types[typeName]
 

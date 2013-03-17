@@ -4,7 +4,7 @@
     "description": "cosy language extension library",
     "main": "lib/cosy",
     "scripts": {
-        "prepublish": "coffee -bc src lib",
+        "prepublish": "coffee -bc -o lib src; browserify lib/lang.js > build/lang.js",
         "test": "./node_modules/.bin/mocha -u tdd --compilers coffee:coffee-script test"
     },
     "repository": {

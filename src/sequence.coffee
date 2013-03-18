@@ -2,7 +2,7 @@
 
 do (
   root = this,
-  factory = (protocol, tail, {fn$}) ->
+  factory = (protocol, tail, {fn$}, {IStream}) ->
     ISeq = protocol.define 'ISeq',
       'A logical list'
       ['first', 'Returns the first item in the collection. If coll is null, returns null']
@@ -19,6 +19,10 @@ do (
     class Sequence
       constructor: (@head, @tail) ->
 
+    protocol.extend ISeq, Sequence,
+      ['first', (coll) -> coll.head]
+      ['rest', (coll) -> coll.tail]
+
     class LazySeqence extends Sequence
       constructor: (body) ->
         throw new Error 'body must be a function' unless typeof body is 'function'
@@ -29,12 +33,20 @@ do (
           @realise = -> res
           res
 
-    protocol.extend ISeq, Sequence,
-      ['first', (coll) -> coll.head]
-      ['rest', (coll) -> coll.tail]
+    class StreamSequence
+      constructor: (@stream) ->
+
+    protocol.extend IStream, StreamSequence,
+      ['tap', (coll, fn) -> stream.tap coll.stream, fn]
+      ['emit', (coll, val) -> stream.emit coll.stream, val]
 
     seq = (coll) ->
-      throw new Error 'Does not implement ISeq' unless protocol.implements ISeq, coll
+      unless protocol.implements ISeq, coll
+        if (protocol.implements IStream, coll)
+          coll = new StreamSequence coll 
+        else
+          throw new Error 'Does not implement ISeq'
+
       return do coll.realise if coll instanceof LazySeqence
       coll
 
@@ -172,12 +184,13 @@ do (
     protocol = require './protocol'
     tail = require './tail'
     dispatch = require './dispatch'
-    module.exports = factory protocol, tail, dispatch
+    stream = require './stream'
+    module.exports = factory protocol, tail, dispatch, stream
   else if define?.amd
-    define ['./protocol', './tail', './dispatch'], factory
+    define ['./protocol', './tail', './dispatch', './stream'], factory
   else
     root.cosy ?= {}
     root.cosy.lang ?= {}
     root.cosy.lang.sequence = factory root.cosy.protocol,
-      root.cosy.tail, root.cosy.dispatch
+      root.cosy.tail, root.cosy.dispatch root.cosy.stream
   return

@@ -57,6 +57,7 @@ do (
       any?[getId dispatcher]
 
     extendMethod = (proto, type, name, fn) ->
+      throw new Error name + ' not in interface' unless proto[name]?
       md = meta proto[name]
       throw new Error name + ' not extendable' unless md.extendable
       type.prototype[getId proto[name]] = fn

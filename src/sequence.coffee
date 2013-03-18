@@ -36,9 +36,7 @@ do (
     class StreamSequence
       constructor: (@stream) ->
 
-    protocol.extend IStream, StreamSequence,
-      ['tap', (coll, fn) -> stream.tap coll.stream, fn]
-      ['emit', (coll, val) -> stream.emit coll.stream, val]
+      first: ->
 
     seq = (coll) ->
       unless protocol.implements ISeq, coll

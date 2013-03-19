@@ -34,6 +34,7 @@ do (
     stream = {
       IStream
       sink
+      skip: {}
     }
 ) ->
   if "object" is typeof exports

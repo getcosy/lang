@@ -49,32 +49,8 @@ do (
       seq coll
       ISeq.rest seq coll
 
-    class LazyStream
-      constructor: (body, coll) ->
-        taps = []
-        @tap = (fn) -> taps.push fn
-        @emit = (val) ->
-          fn val for fn in taps
-
-    protocol.extend IStream, LazyStream,
-      ['tap', (s, fn) -> s.tap fn]
-      ['emit', (s, val) -> s.emit fn]
-
-    lazy = fn$ {
-      1: (body) ->
+    lazy = (body) ->
         new LazySeqence body
-      2: (coll, body) ->
-        coll = seq coll
-        if coll.isSink?
-          lazyStream = new LazyStream body, coll
-          IPromise.when (first coll), (val) ->
-            console.log (rest coll)
-            next = body (cons val, (rest coll))
-            IStream.emit (first next)
-          lazyStream
-        else
-          new LazySeqence body, coll
-    }
 
     empty = (colls) ->
       for coll in colls
@@ -118,7 +94,7 @@ do (
 
     filter = (pred, coll) ->
       return null if empty [coll]
-      lazy coll, (coll) ->
+      lazy ->
         f = first coll
         r = rest coll
         if pred f

@@ -2,12 +2,7 @@
 
 do (
   root = this,
-  factory = (protocol, tail, {fn$}, {IStream}) ->
-    ISeq = protocol.define 'ISeq',
-      'A logical list'
-      ['first', 'Returns the first item in the collection. If coll is null, returns null']
-      ['rest', 'Returns a sequence of the items after the first. If there are no more items, returns a logical sequence for which seq returns null.']
-
+  factory = (protocol, tail, {fn$}, ISeq, {IStream, sink}, {IPromise, Promise}) ->
     protocol.extend ISeq, null,
       ['first', (coll) -> null]
       ['rest', (coll) -> null]
@@ -24,26 +19,19 @@ do (
       ['rest', (coll) -> coll.tail]
 
     class LazySeqence extends Sequence
-      constructor: (body) ->
+      constructor: (body, coll) ->
         throw new Error 'body must be a function' unless typeof body is 'function'
         @realise = ->
-          res = do body
+          res = body coll
           while res instanceof LazySeqence
             res = do res.realise
           @realise = -> res
           res
 
-    class StreamSequence
-      constructor: (@stream) ->
-
-    protocol.extend IStream, StreamSequence,
-      ['tap', (coll, fn) -> stream.tap coll.stream, fn]
-      ['emit', (coll, val) -> stream.emit coll.stream, val]
-
     seq = (coll) ->
       unless protocol.implements ISeq, coll
         if (protocol.implements IStream, coll)
-          coll = new StreamSequence coll 
+          coll = sink coll 
         else
           throw new Error 'Does not implement ISeq'
 
@@ -61,8 +49,32 @@ do (
       seq coll
       ISeq.rest seq coll
 
-    lazy = (body) ->
-      new LazySeqence body
+    class LazyStream
+      constructor: (body, coll) ->
+        taps = []
+        @tap = (fn) -> taps.push fn
+        @emit = (val) ->
+          fn val for fn in taps
+
+    protocol.extend IStream, LazyStream,
+      ['tap', (s, fn) -> s.tap fn]
+      ['emit', (s, val) -> s.emit fn]
+
+    lazy = fn$ {
+      1: (body) ->
+        new LazySeqence body
+      2: (coll, body) ->
+        coll = seq coll
+        if coll.isSink?
+          lazyStream = new LazyStream body, coll
+          IPromise.when (first coll), (val) ->
+            console.log (rest coll)
+            next = body (cons val, (rest coll))
+            IStream.emit (first next)
+          lazyStream
+        else
+          new LazySeqence body, coll
+    }
 
     empty = (colls) ->
       for coll in colls
@@ -106,7 +118,7 @@ do (
 
     filter = (pred, coll) ->
       return null if empty [coll]
-      lazy ->
+      lazy coll, (coll) ->
         f = first coll
         r = rest coll
         if pred f
@@ -184,13 +196,16 @@ do (
     protocol = require './protocol'
     tail = require './tail'
     dispatch = require './dispatch'
+    ISeq = require './protocols/ISeq'
     stream = require './stream'
-    module.exports = factory protocol, tail, dispatch, stream
+    promise = require './promise'
+    module.exports = factory protocol, tail, dispatch, ISeq, stream, promise
   else if define?.amd
-    define ['./protocol', './tail', './dispatch', './stream'], factory
+    define ['./protocol', './tail', './dispatch', './protocols/ISeq', './stream', './promise'], factory
   else
     root.cosy ?= {}
     root.cosy.lang ?= {}
     root.cosy.lang.sequence = factory root.cosy.protocol,
-      root.cosy.tail, root.cosy.dispatch root.cosy.stream
+      root.cosy.tail, root.cosy.dispatch, root.cosy.protocols.ISeq, root.cosy.stream,
+      root.cosy.lang.promise
   return

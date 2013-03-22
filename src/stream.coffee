@@ -7,18 +7,25 @@ do (
       ['tap', 'Register on emit']
       ['emit', 'Emit a value']
 
+    skip = {}
+
     class Sink
       constructor: (tapper, promise) ->
         @isSink = true
         next = new Promise
-        IPromise.when promise, ->
+        rest = null
+        value = undefined
+        IPromise.when promise, (val) ->
+          value = val
           tapper.promise = next
 
         @first = ->
-          promise
+          return skip if typeof value is 'undefined'
+          value
         
         @rest = ->
-          new Sink tapper, next
+          return rest if rest?
+          rest = new Sink tapper, next
 
     protocol.extend ISeq, Sink,
       ['first', (snk) -> snk.first()]
@@ -26,7 +33,8 @@ do (
 
     sink = (strm) ->
       tapper = (val) ->
-        IPromise.deliver tapper.promise, val if tapper.promise?
+        try
+          IPromise.deliver tapper.promise, val if tapper.promise?
       tapper.promise = new Promise
       IStream.tap strm, tapper
       new Sink tapper, tapper.promise
@@ -34,7 +42,7 @@ do (
     stream = {
       IStream
       sink
-      skip: {}
+      skip
     }
 ) ->
   if "object" is typeof exports

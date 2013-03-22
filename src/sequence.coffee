@@ -2,7 +2,7 @@
 
 do (
   root = this,
-  factory = (protocol, tail, {fn$}, ISeq, {IStream, sink}, {IPromise, Promise}) ->
+  factory = (protocol, tail, {fn$}, ISeq, {IStream, sink, skip}, {IPromise, Promise}) ->
     protocol.extend ISeq, null,
       ['first', (coll) -> null]
       ['rest', (coll) -> null]
@@ -22,16 +22,21 @@ do (
       constructor: (body, coll) ->
         throw new Error 'body must be a function' unless typeof body is 'function'
         @realise = ->
+          if coll? and (first coll) is skip
+            return (cons skip, @) if coll?.isSink
+            coll = (rest coll)
           res = body coll
           while res instanceof LazySeqence
             res = do res.realise
+
+          return (cons skip, @) if (first res) is skip
           @realise = -> res
           res
 
     seq = (coll) ->
       unless protocol.implements ISeq, coll
         if (protocol.implements IStream, coll)
-          coll = sink coll 
+          coll = sink coll
         else
           throw new Error 'Does not implement ISeq'
 
@@ -49,8 +54,12 @@ do (
       seq coll
       ISeq.rest seq coll
 
-    lazy = (body) ->
-        new LazySeqence body
+    lazy = fn$ {
+      1: (body) ->
+          new LazySeqence body
+      2: (coll, body) ->
+        new LazySeqence body, seq coll
+    }
 
     empty = (colls) ->
       for coll in colls
@@ -94,7 +103,7 @@ do (
 
     filter = (pred, coll) ->
       return null if empty [coll]
-      lazy ->
+      lazy (coll), (coll) ->
         f = first coll
         r = rest coll
         if pred f

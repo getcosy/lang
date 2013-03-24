@@ -37,14 +37,24 @@ do (
       ['emit', (s, val) -> throw new Error 'Cannot emit to a source']
 
     source = (seq) ->
+      return seq if protocol.implements IStream, seq
       throw new Error 'Not a sequence' unless protocol.implements sequence.ISeq, seq
       new Source seq
+
+    tap = (s, fn) ->
+      s = source s
+      IStream.tap s, fn
+
+    emit = (s, val) ->
+      IStream.emit s, val
 
     stream = {
       IStream
       sink
       source
       skip
+      tap
+      emit
     }
 ) ->
   if "object" is typeof exports

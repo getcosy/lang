@@ -31,9 +31,9 @@ suite "stream", ->
             emitted = null
             simple = new SimpleStream
 
-            stream.IStream.tap simple, (val) ->
+            stream.tap simple, (val) ->
                 emitted = val
-            stream.IStream.emit simple, expected
+            stream.emit simple, expected
 
             assert.strictEqual emitted, expected
 
@@ -49,14 +49,14 @@ suite "stream", ->
 
         test 'first is value when emitted', ->
             value = 1
-            stream.IStream.emit simple, value
+            stream.emit simple, value
             assert.strictEqual (first sink), value
 
         test 'first is still value when emitted twice', ->
             value = 1
             value2 = 2
-            stream.IStream.emit simple, value
-            stream.IStream.emit simple, value2
+            stream.emit simple, value
+            stream.emit simple, value2
             assert.strictEqual (first sink), value
 
         test 'rest returns the same sequence', ->
@@ -66,11 +66,11 @@ suite "stream", ->
             value = 1
             value2 = 2
             value3 = 5
-            stream.IStream.emit simple, value
+            stream.emit simple, value
             assert.strictEqual (first sink), value
-            stream.IStream.emit simple, value2
+            stream.emit simple, value2
             assert.strictEqual (first (rest sink)), value2
-            stream.IStream.emit simple, value3
+            stream.emit simple, value3
             assert.strictEqual (first (rest (rest sink))), value3
 
     suite 'source:', ->
@@ -83,7 +83,7 @@ suite "stream", ->
             actual = []
             expected = [1, 2, 3 ,4]
             source = stream.source expected
-            stream.IStream.tap source, (val) ->
+            stream.tap source, (val) ->
                 actual.push val
             assert.deepEqual actual, expected
 
@@ -91,11 +91,11 @@ suite "stream", ->
             source = stream.source stream.sink simple
             actual = []
             expected = [1, 2, 3 ,4]
-            stream.IStream.tap source, (val) ->
+            stream.tap source, (val) ->
                 actual.push val
 
             for val in expected
-                stream.IStream.emit simple, val
+                stream.emit simple, val
 
             assert.deepEqual actual, expected
 
@@ -112,26 +112,26 @@ suite "stream", ->
 
             test 'first of an emmited stream returns val', ->
               value = 1
-              stream.IStream.emit simple, value
+              stream.emit simple, value
               assert.strictEqual (first lazySequence), value
 
             test 'first is still value when emitted twice', ->
               value = 1
               value2 = 2
-              stream.IStream.emit simple, value
-              stream.IStream.emit simple, value2
+              stream.emit simple, value
+              stream.emit simple, value2
               assert.strictEqual (first lazySequence), value
 
             test 'filter', ->
                 value = 1
                 value2 = 2
                 value3 = 3
-                stream.IStream.emit simple, value
+                stream.emit simple, value
                 assert.strictEqual (first lazySequence), value
                 assert.strictEqual (first (rest lazySequence)), stream.skip
-                stream.IStream.emit simple, value2
+                stream.emit simple, value2
                 assert.strictEqual (first (rest lazySequence)), stream.skip
-                stream.IStream.emit simple, value3
+                stream.emit simple, value3
                 assert.strictEqual (first (rest lazySequence)), value3
 
         suite '2 lazy sequences:', ->
@@ -144,19 +144,19 @@ suite "stream", ->
                 fizzbuzz = filter ((x)-> 0 is x % 5), fizz
 
             test 'fizz', ->
-                stream.IStream.emit simple, 5
+                stream.emit simple, 5
                 assert.strictEqual (first fizz), stream.skip
-                stream.IStream.emit simple, 3
+                stream.emit simple, 3
                 assert.strictEqual (first fizz), 3
 
             test 'buzz', ->
-                stream.IStream.emit simple, 5
+                stream.emit simple, 5
                 assert.strictEqual (first buzz), 5
-                stream.IStream.emit simple, 3
+                stream.emit simple, 3
                 assert.strictEqual (first buzz), 5
 
             test 'fizzbuzz', ->
-                stream.IStream.emit simple, 15
+                stream.emit simple, 15
                 assert.strictEqual (first fizz), 15
                 assert.strictEqual (first buzz), 15
                 assert.strictEqual (first fizzbuzz), 15
@@ -172,15 +172,15 @@ suite "stream", ->
                 assert.strictEqual (first taken), stream.skip
 
             test 'take 1', ->
-                stream.IStream.emit simple, 1
+                stream.emit simple, 1
                 assert.strictEqual (first taken), 1
                 assert.strictEqual (first taken), 1
                 assert.strictEqual (first (rest taken)), stream.skip
 
             test 'take 2', ->
-                stream.IStream.emit simple, 1
+                stream.emit simple, 1
                 assert.strictEqual (first taken), 1
-                stream.IStream.emit simple, 2
+                stream.emit simple, 2
                 assert.strictEqual (first taken), 1
                 assert.strictEqual (first (rest taken)), 2
 
@@ -188,7 +188,7 @@ suite "stream", ->
                 current = taken
                 for i in [1..5]
                     assert.strictEqual (first current), stream.skip
-                    stream.IStream.emit simple, i
+                    stream.emit simple, i
                     assert.strictEqual (first current), i
                     current = (rest current)
                 assert.strictEqual (first current), null
@@ -202,27 +202,27 @@ suite "stream", ->
 
             test 'dropped', ->
                 for i in [1..5]
-                    stream.IStream.emit simple, i
+                    stream.emit simple, i
                     assert.strictEqual (first dropped), stream.skip
-                stream.IStream.emit simple, 1
+                stream.emit simple, 1
                 assert.strictEqual (first dropped), 1
 
         suite 'source:', ->
-            taken = simple = source = null
+            taken = simple = null
 
             setup ->
                 simple = new SimpleStream
                 taken = sequence.take 5, simple
-                source = stream.source taken
 
             test 'lazy sync', ->
                 actual = []
                 expected = [1, 2, 3, 4, 5]
-                stream.IStream.tap source, (val) ->
+
+                stream.tap taken, (val) ->
                     actual.push val
 
                 for val in expected
-                    stream.IStream.emit simple, val
+                    stream.emit simple, val
 
-                stream.IStream.emit simple, 6
+                stream.emit simple, 6
                 assert.deepEqual actual, expected

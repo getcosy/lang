@@ -2,9 +2,9 @@
     "name": "cosy-lang",
     "version": "0.1.0",
     "description": "cosy language extension library",
-    "main": "lib/cosy",
+    "main": "lib/lang",
     "scripts": {
-        "prepublish": "coffee -bc -o lib src; browserify lib/lang.js > build/lang.js",
+        "prepublish": "coffee -bc -o lib src",
         "test": "./node_modules/.bin/mocha -u tdd --compilers coffee:coffee-script test"
     },
     "repository": {

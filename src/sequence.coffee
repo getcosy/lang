@@ -76,15 +76,22 @@ do (
           tail.recur makeVec, (rest coll), A
       tail.loop makeVec, coll
 
-    map = (fn, colls...) ->
-      return null if empty colls
-      lazy ->
-        firsts = []
-        rests = []
-        for coll in colls
-          firsts.push first coll
-          rests.push rest coll
-        cons (fn firsts...), (map fn, rests...)
+    map = fn$ {
+      0: (fn, coll) ->
+        return null if empty colls
+        lazy coll, (coll) ->
+          cons (fn (first coll)), (map fn, (rest coll))
+      $: (fn, colls...) ->
+        return null if empty colls
+        lazy ->
+          firsts = []
+          rests = []
+          for coll in colls
+            throw new Error 'Cannot multi map a sink' if coll?.isSink
+            firsts.push first coll
+            rests.push rest coll
+          cons (fn firsts...), (map fn, rests...)
+    }
 
     reduce = fn$ {
       2: (fn, coll) ->
@@ -149,9 +156,9 @@ do (
       0: () ->
         lazy -> null
       1: (x) ->
-        lazy -> x
+        x
       2: (x, y) ->
-        lazy ->
+        lazy x, (x) ->
           if empty [x]
             y
           else

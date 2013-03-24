@@ -5,7 +5,7 @@
 protocol = require '../src/protocol'
 {IPromise} = require '../src/promise'
 sequence = require '../src/sequence'
-
+ISync = require '../src/protocols/ISync'
 {ISeq, first, rest, map, filter, lazy, cons} = sequence
 {when: _when} = IPromise
 
@@ -72,6 +72,32 @@ suite "stream", ->
             assert.strictEqual (first (rest sink)), value2
             stream.IStream.emit simple, value3
             assert.strictEqual (first (rest (rest sink))), value3
+
+    suite 'source:', ->
+        simple = null
+
+        setup ->
+            simple = new SimpleStream
+
+        test 'Simple sequence', ->
+            actual = []
+            expected = [1, 2, 3 ,4]
+            source = stream.source expected
+            stream.IStream.tap source, (val) ->
+                actual.push val
+            assert.deepEqual actual, expected
+
+        test 'sink', ->
+            source = stream.source stream.sink simple
+            actual = []
+            expected = [1, 2, 3 ,4]
+            stream.IStream.tap source, (val) ->
+                actual.push val
+
+            for val in expected
+                stream.IStream.emit simple, val
+
+            assert.deepEqual actual, expected
 
     suite 'Lazy evaluation:', ->
         suite '1 lazy sequence:', ->
@@ -180,3 +206,23 @@ suite "stream", ->
                     assert.strictEqual (first dropped), stream.skip
                 stream.IStream.emit simple, 1
                 assert.strictEqual (first dropped), 1
+
+        suite 'source:', ->
+            taken = simple = source = null
+
+            setup ->
+                simple = new SimpleStream
+                taken = sequence.take 5, simple
+                source = stream.source taken
+
+            test 'lazy sync', ->
+                actual = []
+                expected = [1, 2, 3, 4, 5]
+                stream.IStream.tap source, (val) ->
+                    actual.push val
+
+                for val in expected
+                    stream.IStream.emit simple, val
+
+                stream.IStream.emit simple, 6
+                assert.deepEqual actual, expected

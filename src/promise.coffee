@@ -38,6 +38,8 @@ do (
           realised = true
           for listener in listeners
             listener val
+        @isRealised = ->
+          realised
 
     protocol.extend IPromise, Promise,
       ['when', (prom, fn) -> prom.addListener fn]

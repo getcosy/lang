@@ -2,7 +2,9 @@
 
 do (
   root = this,
-  factory = (protocol, tail, {fn$}, ISeq, {IStream, sink, skip}, {IPromise, Promise}) ->
+  factory = (protocol, tail, {fn$}, ISeq, ISync, IStream, sink, promise) ->
+    {skip} = IStream
+    {IPromise, Promise} = promise
     protocol.extend ISeq, null,
       ['first', (coll) -> null]
       ['rest', (coll) -> null]
@@ -21,6 +23,7 @@ do (
     class LazySeqence extends Sequence
       constructor: (body, coll) ->
         throw new Error 'body must be a function' unless typeof body is 'function'
+        @realised = false
         @realise = ->
           if coll? and (first coll) is skip
             return (cons skip, @) if coll?.isSink
@@ -29,8 +32,25 @@ do (
           while res instanceof LazySeqence
             res = do res.realise
 
-          (@realise = -> res) unless (first res) is skip
+          unless (first res) is skip
+            @realised = true
+            @realise = -> res
           res
+
+    class SyncedLazySequence extends LazySeqence
+      constructor: (body, coll) ->
+        super body, coll
+        ready = new Promise
+        ISync.onReady coll, =>
+          do @realise
+          IPromise.deliver ready if @realised
+
+        @onReady = (fn) ->
+          IPromise.when ready, fn
+
+    protocol.extend ISync, SyncedLazySequence,
+      ['ready', (s) -> s.realised]
+      ['onReady', (s, fn) -> s.onReady fn]
 
     seq = (coll) ->
       unless protocol.implements ISeq, coll
@@ -57,7 +77,11 @@ do (
       1: (body) ->
           new LazySeqence body
       2: (coll, body) ->
-        new LazySeqence body, seq coll
+        coll = seq coll
+        if protocol.implements ISync, coll
+          new SyncedLazySequence body, coll
+        else
+          new LazySeqence body, coll
     }
 
     empty = (colls) ->
@@ -190,15 +214,17 @@ do (
     tail = require './tail'
     dispatch = require './dispatch'
     ISeq = require './protocols/ISeq'
-    stream = require './stream'
+    ISync = require './protocols/ISync'
+    IStream = require './protocols/IStream'
+    sink = require './stream/sink'
     promise = require './promise'
-    module.exports = factory protocol, tail, dispatch, ISeq, stream, promise
+    module.exports = factory protocol, tail, dispatch, ISeq, ISync, IStream, sink, promise
   else if define?.amd
-    define ['./protocol', './tail', './dispatch', './protocols/ISeq', './stream', './promise'], factory
+    define ['./protocol', './tail', './dispatch', './protocols/ISeq', './protocols/ISync', './protocols/IStream', './stream/sink', './promise'], factory
   else
     root.cosy ?= {}
     root.cosy.lang ?= {}
     root.cosy.lang.sequence = factory root.cosy.protocol,
-      root.cosy.tail, root.cosy.dispatch, root.cosy.protocols.ISeq, root.cosy.stream,
-      root.cosy.lang.promise
+      root.cosy.tail, root.cosy.dispatch, root.cosy.protocols.ISeq, root.cosy.protocols.ISync,
+      root.cosy.protocols.IStream, root.cosy.stream.sink, root.cosy.lang.promise
   return

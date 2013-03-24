@@ -2,59 +2,63 @@
 
 do (
   root = this,
-  factory = (protocol, ISeq, {Promise, IPromise}) ->
-    IStream = protocol.define 'IStream',
-      ['tap', 'Register on emit']
-      ['emit', 'Emit a value']
+  factory = (protocol, IStream, sequence, ISync, sink) ->
 
-    skip = {}
+    {skip} = IStream
 
-    class Sink
-      constructor: (tapper, promise) ->
-        @isSink = true
-        next = new Promise
-        rest = null
-        value = undefined
-        IPromise.when promise, (val) =>
-          value = val
-          tapper.promise = next
+    class Source
+      constructor: (seq) ->
+        @fns = []
+        initialised = false
+        init = ->
+          initialised = true
+          if protocol.implements ISync, seq
+            ISync.onReady seq, emitSync
+          else
+            do emitAll
+        emitSync = ->
+          value = (sequence.first seq)
+          emit value
+          seq = (sequence.rest seq)
+          ISync.onReady seq, emitSync
+        emitAll = ->
+          while f = (sequence.first seq)
+            unless f is skip
+              emit f
+              seq = sequence.rest seq
+        emit = (val) =>
+          fn val for fn in @fns
+        @tap = (fn) =>
+          @fns.push fn
+          do init unless initialised
 
-        @first = ->
-          return skip if typeof value is 'undefined'
-          value
-        
-        @rest = ->
-          return rest if rest?
-          rest = new Sink tapper, next
+    protocol.extend IStream, Source,
+      ['tap', (s, fn) -> s.tap fn]
+      ['emit', (s, val) -> throw new Error 'Cannot emit to a source']
 
-    protocol.extend ISeq, Sink,
-      ['first', (snk) -> snk.first()]
-      ['rest', (snk) -> snk.rest()]
-
-    sink = (strm) ->
-      tapper = (val) ->
-        try
-          IPromise.deliver tapper.promise, val if tapper.promise?
-      tapper.promise = new Promise
-      IStream.tap strm, tapper
-      new Sink tapper, tapper.promise
+    source = (seq) ->
+      throw new Error 'Not a sequence' unless protocol.implements sequence.ISeq, seq
+      new Source seq
 
     stream = {
       IStream
       sink
+      source
       skip
     }
 ) ->
   if "object" is typeof exports
     protocol = require './protocol'
-    ISeq = require './protocols/ISeq'
-    promise = require './promise'
-    module.exports = factory protocol, ISeq, promise
+    IStream = require './protocols/IStream'
+    sequence = require './sequence'
+    ISync = require './protocols/ISync'
+    sink = require './stream/sink'
+    module.exports = factory protocol, IStream, sequence, ISync, sink
   else if define?.amd
-    define ['./protocol', './protocols/ISeq', './promise'], factory
+    define ['./protocol', './protocols/IStream', './sequence', './protocols/ISync', './stream/sink'], factory
   else
     root.cosy ?= {}
     root.cosy.lang ?= {}
-    root.cosy.lang.stream = factory root.cosy.lang.protocol,
-      root.cosy.lang.protocols.ISeq, root.cosy.lang.promise
+    root.cosy.lang.stream = factory root.cosy.lang.protocol, root.cosy.lang.protocols.IStream,
+      root.cosy.lang.sequence, root.cosy.lang.protocols.ISync, root.cosy.lang.stream.sink
   return

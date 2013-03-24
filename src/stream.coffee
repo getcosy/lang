@@ -47,6 +47,11 @@ do (
     emit = (s, val) ->
       IStream.emit s, val
 
+    pipe = (src, tgt) ->
+      src = source src
+      src.tap (val) ->
+        emit tgt, val
+
     stream = {
       IStream
       sink
@@ -54,6 +59,7 @@ do (
       skip
       tap
       emit
+      pipe
     }
 ) ->
   if "object" is typeof exports

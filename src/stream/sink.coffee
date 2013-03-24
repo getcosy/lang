@@ -40,6 +40,7 @@ do (
       ['onReady', (snk, fn) -> snk.onReady fn]
 
     sink = (strm) ->
+      return strm if protocol.implements ISeq, strm
       throw new Error 'Not a stream' unless protocol.implements IStream, strm
       tapper = (val) ->
         try

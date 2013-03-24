@@ -99,6 +99,25 @@ suite "stream", ->
 
             assert.deepEqual actual, expected
 
+    suite 'pipe:', ->
+        src = tgt = null
+
+        setup ->
+            src = new SimpleStream
+            tgt = new SimpleStream
+            stream.pipe src, tgt
+
+        test 'pipe', ->
+            actual = []
+            expected = [1, 2, 3 ,4]
+            stream.tap tgt, (val) ->
+                actual.push val
+
+            for val in expected
+                stream.emit src, val
+
+            assert.deepEqual actual, expected
+
     suite 'Lazy evaluation:', ->
         suite '1 lazy sequence:', ->
             lazySequence = simple = s = null

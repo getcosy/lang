@@ -29,8 +29,7 @@ do (
           while res instanceof LazySeqence
             res = do res.realise
 
-          return (cons skip, @) if (first res) is skip
-          @realise = -> res
+          (@realise = -> res) unless (first res) is skip
           res
 
     seq = (coll) ->
@@ -67,6 +66,7 @@ do (
       true
 
     vec = (coll) ->
+      throw new Error 'Cannot vec a sink' if coll?.isSink
       makeVec = (coll, A = []) ->
         item = first coll
         if item is null
@@ -92,6 +92,7 @@ do (
         return (do fn) if val is null
         reduce fn, val, (rest coll)
       3: (fn, val, coll) ->
+        throw new Error 'Cannot reduce a sink' if coll?.isSink
         doReduce = (fn, val, coll) ->
           if empty [coll]
             val
@@ -112,35 +113,35 @@ do (
           filter pred, r
 
     take = (n, coll) ->
-      lazy ->
-        return null unless n
-        return null if empty [coll]
+      return null unless n
+      return null if empty [coll]
+      lazy coll, (coll) ->
         cons (first coll), (take n-1, rest coll)
 
     takeWhile = (pred, coll) ->
-      lazy ->
-        return null if empty [coll]
-        return null unless pred first coll
+      return null if empty [coll]
+      return null unless pred first coll
+      lazy coll, (coll) ->
         cons (first coll), (takeWhile pred, rest coll)
 
     drop = (n, coll) ->
-      lazy ->
-        return coll unless n
-        return null if empty [coll]
+      return coll unless n
+      return null if empty [coll]
+      lazy coll, (coll) ->
         drop n-1, rest coll
 
     dropWhile = (pred, coll) ->
-      lazy ->
-        return null if empty [coll]
-        return coll unless pred first coll
+      return null if empty [coll]
+      return coll unless pred first coll
+      lazy coll, (coll) ->
         dropWhile pred, rest coll
 
     partition = fn$ {
       2: (n, coll) ->
         partition n, n, coll
       3: (n, step, coll) ->
-        lazy ->
-          return null if empty [coll]
+        return null if empty [coll]
+        lazy coll, (coll) ->
           cons (take n, coll), (partition n, step, (drop step, coll))
     }
 

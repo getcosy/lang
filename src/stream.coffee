@@ -15,7 +15,7 @@ do (
         next = new Promise
         rest = null
         value = undefined
-        IPromise.when promise, (val) ->
+        IPromise.when promise, (val) =>
           value = val
           tapper.promise = next
 

@@ -4,8 +4,9 @@
 {spy, stub} = require 'sinon'
 protocol = require '../src/protocol'
 {IPromise} = require '../src/promise'
-{ISeq, first, rest, map, filter, lazy, cons} = require '../src/sequence'
+sequence = require '../src/sequence'
 
+{ISeq, first, rest, map, filter, lazy, cons} = sequence
 {when: _when} = IPromise
 
 suite "stream", ->
@@ -133,3 +134,49 @@ suite "stream", ->
                 assert.strictEqual (first fizz), 15
                 assert.strictEqual (first buzz), 15
                 assert.strictEqual (first fizzbuzz), 15
+
+        suite 'take:', ->
+            taken = simple = null
+
+            setup ->
+                simple = new SimpleStream
+                taken = sequence.take 5, simple
+
+            test 'take empty', ->
+                assert.strictEqual (first taken), stream.skip
+
+            test 'take 1', ->
+                stream.IStream.emit simple, 1
+                assert.strictEqual (first taken), 1
+                assert.strictEqual (first taken), 1
+                assert.strictEqual (first (rest taken)), stream.skip
+
+            test 'take 2', ->
+                stream.IStream.emit simple, 1
+                assert.strictEqual (first taken), 1
+                stream.IStream.emit simple, 2
+                assert.strictEqual (first taken), 1
+                assert.strictEqual (first (rest taken)), 2
+
+            test 'take all', ->
+                current = taken
+                for i in [1..5]
+                    assert.strictEqual (first current), stream.skip
+                    stream.IStream.emit simple, i
+                    assert.strictEqual (first current), i
+                    current = (rest current)
+                assert.strictEqual (first current), null
+
+        suite 'drop', ->
+            dropped = simple = null
+
+            setup ->
+                simple = new SimpleStream
+                dropped = sequence.drop 5, simple
+
+            test 'dropped', ->
+                for i in [1..5]
+                    stream.IStream.emit simple, i
+                    assert.strictEqual (first dropped), stream.skip
+                stream.IStream.emit simple, 1
+                assert.strictEqual (first dropped), 1

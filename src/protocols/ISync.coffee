@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol) ->
+    "use strict"
     ISync = protocol.define 'ISync',
       'A syncronisable object'
       ['ready', 'true if the value is ready']

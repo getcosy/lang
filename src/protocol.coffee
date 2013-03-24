@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (_meta, identity) ->
+    "use strict"
     protocol = {}
 
     meta = (obj) ->

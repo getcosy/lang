@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol) ->
+    "use strict"
     IPromise = protocol.define 'IPromise',
       ['when', 'Regester a callback with a deffered']
       ['deliver', 'Resolve a deffered']

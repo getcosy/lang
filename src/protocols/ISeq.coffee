@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol) ->
+    "use strict"
     ISeq = protocol.define 'ISeq',
       'A logical list'
       ['first', 'Returns the first item in the collection. If coll is null, returns null']

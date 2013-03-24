@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol) ->
+    "use strict"
     IStream = protocol.define 'IStream',
       ['tap', 'Register on emit']
       ['emit', 'Emit a value']

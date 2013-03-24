@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = () ->
+    "use strict"
     tail = {}
 
     class Recur

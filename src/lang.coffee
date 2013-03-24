@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (dispatch, identity, meta, promise, protocol, sequence, stream, tail) ->
+    "use strict"
     {
       dispatch
       identity

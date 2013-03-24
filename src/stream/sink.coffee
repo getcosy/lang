@@ -1,9 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol, IStream, ISeq, ISync, promise) ->
-
+    "use strict"
     {skip} = IStream
     {Promise, IPromise} = promise
 
@@ -59,10 +58,12 @@ do (
     promise = require '../promise'
     module.exports = factory protocol, IStream, ISeq, ISync, promise
   else if define?.amd
-    define ['../protocol', '../protocols/IStream', '../protocols/ISeq', '../protocols/ISync', '../promise'], factory
+    define ['../protocol', '../protocols/IStream', '../protocols/ISeq',
+      '../protocols/ISync', '../promise'], factory
   else
     root.cosy ?= {}
     root.cosy.lang ?= {}
-    root.cosy.lang.stream.sink = factory root.cosy.lang.protocol, root.cosy.lang.protocols.IStream,
-      root.cosy.lang.protocols.ISeq, root.cosy.lang.protocols.ISync, root.cosy.lang.promise
+    root.cosy.lang.stream.sink = factory root.cosy.lang.protocol,
+      root.cosy.lang.protocols.IStream, root.cosy.lang.protocols.ISeq,
+      root.cosy.lang.protocols.ISync, root.cosy.lang.promise
   return

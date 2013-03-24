@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol, tail, {fn$}, ISeq, ISync, IStream, sink, promise) ->
+    "use strict"
     {skip} = IStream
     {IPromise, Promise} = promise
     protocol.extend ISeq, null,
@@ -75,7 +75,7 @@ do (
 
     lazy = fn$ {
       1: (body) ->
-          new LazySeqence body
+        new LazySeqence body
       2: (coll, body) ->
         coll = seq coll
         if protocol.implements ISync, coll

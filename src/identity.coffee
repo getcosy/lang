@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = () ->
+    "use strict"
     identity = {}
     nextId = 0
 

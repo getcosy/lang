@@ -1,9 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = (protocol, IStream, sequence, ISync, sink) ->
-
+    "use strict"
     {skip} = IStream
 
     class Source

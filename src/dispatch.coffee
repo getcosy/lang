@@ -1,8 +1,8 @@
-"use stict"
 
 do (
   root = this,
   factory = () ->
+    "use strict"
     fn$ = (def) ->
       return (args...) ->
         return (def[args.length] args...) if def[args.length]?

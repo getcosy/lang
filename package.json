@@ -1,29 +1,29 @@
 {
-    "name": "cosy-lang",
-    "version": "0.1.0",
-    "description": "cosy language extension library",
-    "main": "lib/lang",
-    "scripts": {
-        "prepublish": "coffee -bc -o lib src",
-        "test": "./node_modules/.bin/mocha -u tdd --compilers coffee:coffee-script test"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/getcosy/lang.git"
-    },
-    "devDependencies": {
-        "chai": "1.1.x",
-        "coffee-script": "1.3.x",
-        "coffeelint": "0.5.x",
-        "colors": "0.6.0-1",
-        "jake": "0.3.x",
-        "mocha": "1.2.x",
-        "sinon": "1.3.x"
-    },
-    "contributors": [
-        {
-          "name": "Neel Upadhyaya"
-        }
-    ],
-    "license": "MIT"
+  "name": "cosy-lang",
+  "version": "0.2.0",
+  "description": "cosy language extension library",
+  "main": "lib/lang",
+  "scripts": {
+    "prepublish": "coffee -bc -o lib src",
+    "test": "./node_modules/.bin/mocha -u tdd --compilers coffee:coffee-script test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/getcosy/lang.git"
+  },
+  "devDependencies": {
+    "chai": "1.1.x",
+    "coffee-script": "1.3.x",
+    "coffeelint": "0.5.x",
+    "colors": "0.6.0-1",
+    "jake": "0.3.x",
+    "mocha": "1.2.x",
+    "sinon": "1.3.x"
+  },
+  "contributors": [
+    {
+      "name": "Neel Upadhyaya"
+    }
+  ],
+  "license": "MIT"
 }

@@ -127,7 +127,7 @@ suite "stream", ->
                 lazySequence = filter ((x)-> x&1), simple
 
             test 'first of an unemitted stream returns skip', ->
-              assert.strictEqual (first lazySequence), stream.skip
+                assert.strictEqual (first lazySequence), stream.skip
 
             test 'first of an emmited stream returns val', ->
               value = 1
@@ -151,7 +151,7 @@ suite "stream", ->
                 stream.emit simple, value2
                 assert.strictEqual (first (rest lazySequence)), stream.skip
                 stream.emit simple, value3
-                assert.strictEqual (first (rest lazySequence)), value3
+                assert.strictEqual (first (rest (rest lazySequence))), value3
 
         suite '2 lazy sequences:', ->
             fizzbuzz = fizz = buzz = simple = null
@@ -166,7 +166,7 @@ suite "stream", ->
                 stream.emit simple, 5
                 assert.strictEqual (first fizz), stream.skip
                 stream.emit simple, 3
-                assert.strictEqual (first fizz), 3
+                assert.strictEqual (first (rest fizz)), 3
 
             test 'buzz', ->
                 stream.emit simple, 5
@@ -223,8 +223,45 @@ suite "stream", ->
                 for i in [1..5]
                     stream.emit simple, i
                     assert.strictEqual (first dropped), stream.skip
+                    dropped = (rest dropped)
                 stream.emit simple, 1
                 assert.strictEqual (first dropped), 1
+
+        suite 'mux:', ->
+            simple2 = simple = null
+
+            setup ->
+                simple = new SimpleStream
+                simple2 = new SimpleStream
+
+            test 'single', ->
+                muxed = sequence.mux simple
+                stream.emit simple, 1
+                assert.deepEqual (first muxed), [1]
+
+            test 'double', ->
+                muxed = sequence.mux simple, [2]
+                stream.emit simple, 1
+                assert.deepEqual (first muxed), [1, 2]
+
+        suite 'map', ->
+            mapped = simple = mapped2 = simple2 = null
+
+            setup ->
+                simple = new SimpleStream
+                mapped = sequence.map ((x) -> 2*x), simple
+                mapped2 = sequence.map ((x, y) -> x+y), simple, [2]
+            
+            test 'single map', ->
+                stream.emit simple, 1
+                assert.strictEqual (first mapped), 2
+
+            test 'multi map', ->
+                actual = null
+                stream.emit simple, 1
+                stream.tap mapped2, (val) ->
+                    actual = val
+                assert.strictEqual actual, 3
 
         suite 'source:', ->
             taken = simple = null
@@ -241,6 +278,20 @@ suite "stream", ->
                     actual.push val
 
                 for val in expected
+                    stream.emit simple, val
+
+                stream.emit simple, 6
+                assert.deepEqual actual, expected
+
+            test 'lazy map sync', ->
+                actual = []
+                input = [1, 2, 3, 4, 5]
+                expected = [3, 4, 5]
+                dropped = sequence.drop 2, taken
+                stream.tap dropped, (val) ->
+                    actual.push val
+
+                for val in input
                     stream.emit simple, val
 
                 stream.emit simple, 6

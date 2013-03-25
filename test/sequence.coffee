@@ -36,12 +36,12 @@ suite "sequence", ->
             test 'rest(Array)', ->
                 assert.deepEqual (rest arr), [2, 3, 4]
 
-    suite 'cons:', ->
-        test 'car', ->
-            assert.strictEqual (first (cons 1, [2])), 1
+        suite 'cons:', ->
+            test 'car', ->
+                assert.strictEqual (first (cons 1, [2])), 1
 
-        test 'cadr', ->
-            assert.strictEqual (first (rest (cons 1, [2]))), 2
+            test 'cadr', ->
+                assert.strictEqual (first (rest (cons 1, [2]))), 2
 
     suite 'lazy:', ->
         called = numbers = null
@@ -160,6 +160,7 @@ suite "sequence", ->
             assert.deepEqual (vec first windows), [1, 2, 3, 4]
             assert.deepEqual (vec first rest windows), [4, 5, 6]
 
+
     suite 'concat:', ->
         concat = drop = null
 
@@ -180,3 +181,23 @@ suite "sequence", ->
 
         test '4 args', ->
             assert.strictEqual (first drop 7, concat [1, 2, 3], [4, 5], [6, 7], [8]), 8
+
+    suite 'mux', ->
+        mux = vec = null
+        setup ->
+            {mux, vec} = sequence
+
+        test 'mux 1 arg', ->
+            muxed = mux [1, 2]
+            assert.deepEqual (vec (first muxed)), [1]
+            assert.deepEqual (vec (first (rest muxed))), [2]
+
+        test 'mux 2 args', ->
+            muxed = mux [1, 2], [3, 4]
+            assert.deepEqual (vec (first muxed)), [1, 3]
+            assert.deepEqual (vec (first (rest muxed))), [2, 4]
+
+        # test 'mux 3 args', ->
+        #     muxed = mux [1, 2], [3, 4], [5, 6]
+        #     assert.deepEqual (vec (first muxed)), [1, 3, 5]
+        #     assert.deepEqual (vec (first (rest muxed))), [2, 4, 6]

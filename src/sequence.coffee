@@ -20,16 +20,20 @@ do (
       ['first', (coll) -> coll.head]
       ['rest', (coll) -> coll.tail]
 
-    class LazySeqence extends Sequence
+    class LazySequence extends Sequence
       constructor: (body, coll) ->
         throw new Error 'body must be a function' unless typeof body is 'function'
         @realised = false
+        @head = skip
         @realise = ->
           if coll? and (first coll) is skip
             return (cons skip, @) if coll?.isSink
             coll = (rest coll)
+          if coll instanceof SyncedLazySequence && !coll.realised
+            return (cons skip, @)
           res = body coll
-          while res instanceof LazySeqence
+
+          while res instanceof LazySequence
             res = do res.realise
 
           unless (first res) is skip
@@ -37,15 +41,18 @@ do (
             @realise = -> res
           res
 
-    class SyncedLazySequence extends LazySeqence
+    class SyncedLazySequence extends LazySequence
       constructor: (body, coll) ->
         super body, coll
         ready = new Promise
         ISync.onReady coll, =>
-          do @realise
-          IPromise.deliver ready if @realised
+          res = do @realise
+          @head = (first res)
+          @tail = (rest res)
+          IPromise.deliver ready
 
         @onReady = (fn) ->
+          @head = undefined
           IPromise.when ready, fn
 
     protocol.extend ISync, SyncedLazySequence,
@@ -59,7 +66,8 @@ do (
         else
           throw new Error 'Does not implement ISeq'
 
-      return do coll.realise if coll instanceof LazySeqence
+      return coll if coll instanceof SyncedLazySequence and !coll.realised
+      return do coll.realise if coll instanceof LazySequence
       coll
 
     cons = (item, coll) ->
@@ -75,13 +83,13 @@ do (
 
     lazy = fn$ {
       1: (body) ->
-        new LazySeqence body
+        new LazySequence body
       2: (coll, body) ->
         coll = seq coll
         if protocol.implements ISync, coll
           new SyncedLazySequence body, coll
         else
-          new LazySeqence body, coll
+          new LazySequence body, coll
     }
 
     empty = (colls) ->
@@ -101,17 +109,24 @@ do (
       tail.loop makeVec, coll
 
     map = fn$ {
-      0: (fn, coll) ->
-        return null if empty colls
+      2: (fn, coll) ->
+        return null if empty [coll]
         lazy coll, (coll) ->
           cons (fn (first coll)), (map fn, (rest coll))
+      3: (fn, c1, c2) ->
+        muxed = mux c1, c2
+        demux = (muxed) ->
+          args = vec muxed
+          return null if empty [args]
+          fn args...
+        map demux, muxed
       $: (fn, colls...) ->
         return null if empty colls
         lazy ->
           firsts = []
           rests = []
           for coll in colls
-            throw new Error 'Cannot multi map a sink' if coll?.isSink
+            throw new Error 'Unexpected skip' if (first coll) is skip
             firsts.push first coll
             rests.push rest coll
           cons (fn firsts...), (map fn, rests...)
@@ -123,8 +138,8 @@ do (
         return (do fn) if val is null
         reduce fn, val, (rest coll)
       3: (fn, val, coll) ->
-        throw new Error 'Cannot reduce a sink' if coll?.isSink
         doReduce = (fn, val, coll) ->
+          throw new Error 'Unexpected skip' if (first coll) is skip
           if empty [coll]
             val
           else
@@ -135,7 +150,7 @@ do (
 
     filter = (pred, coll) ->
       return null if empty [coll]
-      lazy (coll), (coll) ->
+      lazy coll, (coll) ->
         f = first coll
         r = rest coll
         if pred f
@@ -156,10 +171,12 @@ do (
         cons (first coll), (takeWhile pred, rest coll)
 
     drop = (n, coll) ->
-      return coll unless n
       return null if empty [coll]
       lazy coll, (coll) ->
-        drop n-1, rest coll
+        if n
+          drop n-1, rest coll
+        else
+          cons (first coll), drop n, rest coll
 
     dropWhile = (pred, coll) ->
       return null if empty [coll]
@@ -180,7 +197,7 @@ do (
       0: () ->
         lazy -> null
       1: (x) ->
-        x
+        lazy x, (x) -> x
       2: (x, y) ->
         lazy x, (x) ->
           if empty [x]
@@ -189,6 +206,17 @@ do (
             cons (first x), (concat (rest x), y)
       $: (x, y, z...) ->
         concat (concat x, y), z...
+    }
+
+    mux = fn$ {
+      1: (x) ->
+        lazy x, (x) ->
+          return cons [(first x)], mux (rest x)
+      2: (x, y) ->
+        lazy x, (x) ->
+          return cons [(first x), (first y)], mux (rest x), (rest y)
+      $: (x, y, z...) ->
+        throw new Exception 'cannot mux more than 2 sequences'
     }
 
     sequence = {
@@ -207,6 +235,7 @@ do (
       dropWhile
       partition
       concat
+      mux
     }
 ) ->
   if "object" is typeof exports

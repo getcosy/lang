@@ -26,17 +26,17 @@ do (
 
     class Promise
       constructor: ->
-        listeners = []
+        @listeners = []
         realised = false
         val = null
         @addListener = (fn) ->
           return fn val if realised
-          listeners.push fn
+          @listeners.push fn
         @realise = (realisedVal) ->
           throw new Error 'Already realised' if realised
           val = realisedVal
           realised = true
-          for listener in listeners
+          for listener in @listeners
             listener val
         @isRealised = ->
           realised

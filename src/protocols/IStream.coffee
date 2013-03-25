@@ -7,7 +7,7 @@ do (
       ['tap', 'Register on emit']
       ['emit', 'Emit a value']
 
-    IStream.skip = {}
+    IStream.skip = {skip:true}
 
     IStream
 ) ->

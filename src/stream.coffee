@@ -17,7 +17,7 @@ do (
             do emitAll
         emitSync = ->
           value = (sequence.first seq)
-          emit value
+          emit value unless value is skip
           seq = (sequence.rest seq)
           ISync.onReady seq, emitSync
         emitAll = ->
